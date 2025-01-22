@@ -4,9 +4,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN go mod tidy
-
-RUN CGO_ENABLED=0 go build -a -o nodeMetricsMocker main.go
+RUN go mod tidy && CGO_ENABLED=0 go build -a -o nodeMetricsMocker main.go
 
 FROM alpine:latest
 
