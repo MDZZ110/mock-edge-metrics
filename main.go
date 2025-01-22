@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/MDZZ110/mock-edge-metrics/metrics"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -67,6 +68,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	rand.Seed(time.Now().UnixNano())
+	//randomSecond := rand.Intn(interval)
+	//time.Sleep(time.Duration(randomSecond) * time.Second)
 
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
