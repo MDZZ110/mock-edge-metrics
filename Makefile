@@ -5,4 +5,4 @@ docker-build:
 
 .PHONY: build
 build:
-	GOOS=linux GOARCH=amd64 go build -a -o nodeMetricsMocker main.go
+	GOOS=linux GOARCH=amd64 go build -a -o bin/nodeMetricsMocker main.go
