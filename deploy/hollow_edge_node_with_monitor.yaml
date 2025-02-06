@@ -19,7 +19,7 @@ spec:
             - /root/nodeMetricsMocker
           args:
             - --cluster=edge-1
-            - --gateway-endpoint=http://172.31.18.9:30999
+            - --gateway-endpoint=http://gateway-whizard-operated.kubesphere-monitoring-system.svc.cluster.local:9090
           resources:
             requests:
               cpu: 20m

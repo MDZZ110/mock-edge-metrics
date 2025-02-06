@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"embed"
 	"flag"
 	"fmt"
@@ -40,11 +41,17 @@ func main() {
 	var cluster string
 	var gatewayEndpoint string
 	var nodeNum int
+	var certFile string
+	var keyFile string
 
-	flag.IntVar(&interval, "interval", 60, "Interval in seconds")
+	flag.IntVar(&interval, "interval", 5, "Interval in seconds")
 	flag.StringVar(&cluster, "cluster", "", "Cluster name")
-	flag.StringVar(&gatewayEndpoint, "gateway-endpoint", "http://gateway-whizard-operated.kubesphere-monitoring-system.svc.cluster.local:9090", "Gateway endpoint")
+	flag.StringVar(&gatewayEndpoint, "gateway-endpoint", "https://172.31.18.9:30275", "Gateway endpoint")
 	flag.IntVar(&nodeNum, "num", 1, "Number of nodes")
+	//flag.StringVar(&certFile, "certFile", "/etc/ssl/whizard/server.crt", "Certificate file")
+	//flag.StringVar(&keyFile, "keyFile", "/etc/ssl/whizard/server.key", "Certificate Key file")
+	flag.StringVar(&certFile, "certFile", "/tmp/ssl/server.crt", "Certificate file")
+	flag.StringVar(&keyFile, "keyFile", "/tmp/ssl/server.key", "Certificate Key file")
 	flag.Parse()
 
 	if cluster == "" {
@@ -64,7 +71,7 @@ func main() {
 	stopCh := make(chan struct{})
 
 	for i := 0; i < nodeNum; i++ {
-		go mockEdgeNode(i, interval, cluster, gatewayEndpoint, stopCh, &mu, &failedCounter, &successCounter)
+		go mockEdgeNode(i, interval, cluster, gatewayEndpoint, stopCh, &mu, &failedCounter, &successCounter, certFile, keyFile)
 	}
 
 	<-done
@@ -73,10 +80,11 @@ func main() {
 
 }
 
-func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh chan struct{}, mu *sync.Mutex, failedCounter *int, successCounter *int) {
+func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh chan struct{}, mu *sync.Mutex, failedCounter *int, successCounter *int, certFile, keyFile string) {
 	duration := time.Duration(interval) * time.Second
 
-	targetUrl := fmt.Sprintf("%s/%s/api/v1/receive", endpoint, cluster)
+	//targetUrl := fmt.Sprintf("%s/%s/api/v1/receive", endpoint, cluster)
+	targetUrl := fmt.Sprintf("%s/push/%s", endpoint, cluster)
 	remoteWriteUrl, err := url.Parse(targetUrl)
 	if err != nil {
 		panic(err)
@@ -89,6 +97,19 @@ func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
 		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	if remoteWriteUrl.Scheme == "https" {
+		httpRoundTripper.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			panic(err)
+		}
+
+		httpRoundTripper.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
 	headers := map[string]string{}
@@ -114,8 +135,8 @@ func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	randomSecond := rand.Intn(interval)
-	time.Sleep(time.Duration(randomSecond) * time.Second)
+	//randomSecond := rand.Intn(interval)
+	//time.Sleep(time.Duration(randomSecond) * time.Second)
 
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
