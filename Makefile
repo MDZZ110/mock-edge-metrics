@@ -1,7 +1,9 @@
+TAG ?= v0.0.1
+
 .PHONY: docker-build
 docker-build:
-	docker build -t harbor.dev.thingsdao.com/edgewize/mock-edge-metrics:v0.0.1 .
-	docker push harbor.dev.thingsdao.com/edgewize/mock-edge-metrics:v0.0.1
+	docker build -t harbor.dev.thingsdao.com/edgewize/mock-edge-metrics:$(TAG) .
+	docker push harbor.dev.thingsdao.com/edgewize/mock-edge-metrics:$(TAG)
 
 .PHONY: buildx-images
 buildx-images:

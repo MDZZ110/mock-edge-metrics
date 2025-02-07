@@ -44,7 +44,7 @@ func main() {
 	var certFile string
 	var keyFile string
 
-	flag.IntVar(&interval, "interval", 5, "Interval in seconds")
+	flag.IntVar(&interval, "interval", 60, "Interval in seconds")
 	flag.StringVar(&cluster, "cluster", "", "Cluster name")
 	flag.StringVar(&gatewayEndpoint, "gateway-endpoint", "https://172.31.18.9:30275", "Gateway endpoint")
 	flag.IntVar(&nodeNum, "num", 1, "Number of nodes")
@@ -90,6 +90,8 @@ func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh
 		panic(err)
 	}
 
+	fmt.Println("Path: ", remoteWriteUrl.Path)
+
 	httpRoundTripper := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -110,6 +112,8 @@ func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh
 		}
 
 		httpRoundTripper.TLSClientConfig.Certificates = []tls.Certificate{cert}
+	} else {
+		remoteWriteUrl.Path = fmt.Sprintf("/%s/api/v1/receive", cluster)
 	}
 
 	headers := map[string]string{}
@@ -135,8 +139,8 @@ func mockEdgeNode(num int, interval int, cluster string, endpoint string, stopCh
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	//randomSecond := rand.Intn(interval)
-	//time.Sleep(time.Duration(randomSecond) * time.Second)
+	randomSecond := rand.Intn(interval)
+	time.Sleep(time.Duration(randomSecond) * time.Second)
 
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
